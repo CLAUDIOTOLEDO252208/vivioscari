@@ -17,7 +17,8 @@ app.use("/turnos", require("./router/turnoRouter"));
 app.use("/clases", require("./router/claseRouter"));
 app.use("/pagos", require("./router/pagoRouter"));
 app.use("/usuarios", require("./router/usuarioRouter")); // 👈 AGREGADO
-
+app.use("/profesores", require("./router/profesorRouter"));
+app.use("/pagos-profesores", require("./router/pagoProfesorRouter"));
 dbConnection();
 
 app.listen(process.env.PORTLOCAL, () => {
