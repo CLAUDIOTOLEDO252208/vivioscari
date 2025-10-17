@@ -21,6 +21,7 @@ app.use("/profesores", require("./router/profesorRouter"));
 app.use("/pagos-profesores", require("./router/pagoProfesorRouter"));
 app.use("/caja", require("./router/cajaRouter"));
 app.use("/gastos", require("./router/gastoRouter"));
+app.use("/cierre-caja", require("./router/cierreCajaRouter"));
 dbConnection();
 
 app.listen(process.env.PORTLOCAL, () => {

@@ -1,0 +1,1011 @@
+// const CierreCaja = require("../model/cierre-caja-model");
+// const Caja = require("../model/caja-model");
+// const Pago = require("../model/pago-model");
+
+// // ✅ Obtener datos para el cierre (sin cerrarlo aún)
+// const obtenerDatosParaCierre = async (req, res) => {
+//   try {
+//     const { fecha_inicio, fecha_fin } = req.query;
+
+//     let fechaInicio, fechaFin;
+
+//     if (fecha_inicio && fecha_fin) {
+//       fechaInicio = new Date(fecha_inicio);
+//       fechaFin = new Date(fecha_fin);
+//       fechaFin.setHours(23, 59, 59, 999);
+//     } else {
+//       // Por defecto: hoy
+//       const hoy = new Date();
+//       fechaInicio = new Date(hoy.setHours(0, 0, 0, 0));
+//       fechaFin = new Date(hoy.setHours(23, 59, 59, 999));
+//     }
+
+//     // Obtener movimientos del período
+//     const movimientos = await Caja.find({
+//       fecha: { $gte: fechaInicio, $lte: fechaFin },
+//     });
+
+//     // Calcular totales
+//     const ingresos = movimientos
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresos = movimientos
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const balance = ingresos - egresos;
+
+//     // Agrupar por categoría
+//     const porCategoria = {};
+//     movimientos.forEach((m) => {
+//       if (!porCategoria[m.categoria]) {
+//         porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+//       }
+//       if (m.tipo === "ingreso") {
+//         porCategoria[m.categoria].ingresos += m.monto;
+//       } else {
+//         porCategoria[m.categoria].egresos += m.monto;
+//       }
+//     });
+
+//     // Calcular efectivo del sistema (basado en pagos en efectivo)
+//     const pagosEfectivo = await Pago.find({
+//       fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+//       formaPago: "Efectivo",
+//     });
+
+//     const efectivoSistema = pagosEfectivo.reduce(
+//       (sum, p) => sum + p.montoPagado,
+//       0
+//     );
+
+//     res.json({
+//       periodo: {
+//         fecha_inicio: fechaInicio,
+//         fecha_fin: fechaFin,
+//       },
+//       totales: {
+//         ingresos,
+//         egresos,
+//         balance,
+//         cantidad_movimientos: movimientos.length,
+//       },
+//       detalles_por_categoria: porCategoria,
+//       arqueo: {
+//         efectivo_sistema: efectivoSistema,
+//       },
+//       movimientos: movimientos.slice(0, 10), // Últimos 10 para preview
+//     });
+//   } catch (error) {
+//     console.error("Error al obtener datos para cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Realizar cierre de caja
+// const realizarCierre = async (req, res) => {
+//   try {
+//     const { fecha_inicio, fecha_fin, efectivo_fisico, observaciones } =
+//       req.body;
+
+//     if (!fecha_inicio || !fecha_fin) {
+//       return res.status(400).json({ msg: "Las fechas son obligatorias" });
+//     }
+
+//     const fechaInicio = new Date(fecha_inicio);
+//     const fechaFin = new Date(fecha_fin);
+//     fechaFin.setHours(23, 59, 59, 999);
+
+//     // Verificar si ya existe un cierre para este período
+//     const cierreExistente = await CierreCaja.findOne({
+//       "periodo.fecha_inicio": fechaInicio,
+//       "periodo.fecha_fin": fechaFin,
+//       estado: "cerrado",
+//     });
+
+//     if (cierreExistente) {
+//       return res.status(400).json({
+//         msg: "Ya existe un cierre para este período",
+//         cierre: cierreExistente,
+//       });
+//     }
+
+//     // Obtener movimientos del período
+//     const movimientos = await Caja.find({
+//       fecha: { $gte: fechaInicio, $lte: fechaFin },
+//     });
+
+//     // Calcular totales
+//     const ingresos = movimientos
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresos = movimientos
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const balance = ingresos - egresos;
+
+//     // Agrupar por categoría
+//     const porCategoria = {};
+//     movimientos.forEach((m) => {
+//       if (!porCategoria[m.categoria]) {
+//         porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+//       }
+//       if (m.tipo === "ingreso") {
+//         porCategoria[m.categoria].ingresos += m.monto;
+//       } else {
+//         porCategoria[m.categoria].egresos += m.monto;
+//       }
+//     });
+
+//     // Calcular efectivo del sistema
+//     const pagosEfectivo = await Pago.find({
+//       fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+//       formaPago: "Efectivo",
+//     });
+
+//     const efectivoSistema = pagosEfectivo.reduce(
+//       (sum, p) => sum + p.montoPagado,
+//       0
+//     );
+//     const efectivoFisico = Number(efectivo_fisico) || 0;
+//     const diferencia = efectivoFisico - efectivoSistema;
+
+//     // Crear cierre
+//     const cierre = new CierreCaja({
+//       periodo: {
+//         fecha_inicio: fechaInicio,
+//         fecha_fin: fechaFin,
+//       },
+//       totales: {
+//         ingresos,
+//         egresos,
+//         balance,
+//         cantidad_movimientos: movimientos.length,
+//       },
+//       detalles_por_categoria: porCategoria,
+//       arqueo: {
+//         efectivo_sistema: efectivoSistema,
+//         efectivo_fisico: efectivoFisico,
+//         diferencia: diferencia,
+//       },
+//       observaciones,
+//       estado: "cerrado",
+//     });
+
+//     await cierre.save();
+
+//     res.status(201).json({
+//       msg: "Cierre de caja realizado exitosamente",
+//       cierre,
+//     });
+//   } catch (error) {
+//     console.error("Error al realizar cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Listar todos los cierres
+// const listarCierres = async (req, res) => {
+//   try {
+//     const cierres = await CierreCaja.find()
+//       .sort({ fecha_cierre: -1 })
+//       .limit(50);
+
+//     res.json({ cierres });
+//   } catch (error) {
+//     console.error("Error al listar cierres:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Obtener un cierre específico
+// const obtenerCierre = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const cierre = await CierreCaja.findById(id);
+
+//     if (!cierre) {
+//       return res.status(404).json({ msg: "Cierre no encontrado" });
+//     }
+
+//     // Obtener los movimientos de ese período
+//     const movimientos = await Caja.find({
+//       fecha: {
+//         $gte: cierre.periodo.fecha_inicio,
+//         $lte: cierre.periodo.fecha_fin,
+//       },
+//     }).sort({ fecha: -1 });
+
+//     res.json({
+//       cierre,
+//       movimientos,
+//     });
+//   } catch (error) {
+//     console.error("Error al obtener cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Eliminar cierre (solo si es necesario corregir)
+// const eliminarCierre = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const cierre = await CierreCaja.findById(id);
+//     if (!cierre) {
+//       return res.status(404).json({ msg: "Cierre no encontrado" });
+//     }
+
+//     await CierreCaja.findByIdAndDelete(id);
+
+//     res.json({ msg: "Cierre eliminado exitosamente" });
+//   } catch (error) {
+//     console.error("Error al eliminar cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Verificar si hay cierre para hoy
+// const verificarCierreHoy = async (req, res) => {
+//   try {
+//     const hoy = new Date();
+//     const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0));
+//     const finHoy = new Date(hoy.setHours(23, 59, 59, 999));
+
+//     const cierreHoy = await CierreCaja.findOne({
+//       "periodo.fecha_inicio": { $gte: inicioHoy },
+//       "periodo.fecha_fin": { $lte: finHoy },
+//       estado: "cerrado",
+//     });
+
+//     res.json({
+//       tiene_cierre: !!cierreHoy,
+//       cierre: cierreHoy,
+//     });
+//   } catch (error) {
+//     console.error("Error al verificar cierre de hoy:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// module.exports = {
+//   obtenerDatosParaCierre,
+//   realizarCierre,
+//   listarCierres,
+//   obtenerCierre,
+//   eliminarCierre,
+//   verificarCierreHoy,
+// };
+
+// //funciona ok con efectivo
+// const CierreCaja = require("../model/cierre-caja-model");
+// const Caja = require("../model/caja-model");
+// const Pago = require("../model/pago-model");
+// const PagoProfesor = require("../model/pago-profesor-model");
+
+// // ✅ Obtener datos para el cierre (sin cerrarlo aún)
+// const obtenerDatosParaCierre = async (req, res) => {
+//   try {
+//     const { fecha_inicio, fecha_fin } = req.query;
+
+//     let fechaInicio, fechaFin;
+
+//     if (fecha_inicio && fecha_fin) {
+//       fechaInicio = new Date(fecha_inicio);
+//       fechaFin = new Date(fecha_fin);
+//       fechaFin.setHours(23, 59, 59, 999);
+//     } else {
+//       // Por defecto: hoy
+//       const hoy = new Date();
+//       fechaInicio = new Date(hoy.setHours(0, 0, 0, 0));
+//       fechaFin = new Date(hoy.setHours(23, 59, 59, 999));
+//     }
+
+//     // Obtener movimientos del período
+//     const movimientos = await Caja.find({
+//       fecha: { $gte: fechaInicio, $lte: fechaFin },
+//     });
+
+//     // Calcular totales
+//     const ingresos = movimientos
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresos = movimientos
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const balance = ingresos - egresos;
+
+//     // Agrupar por categoría
+//     const porCategoria = {};
+//     movimientos.forEach((m) => {
+//       if (!porCategoria[m.categoria]) {
+//         porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+//       }
+//       if (m.tipo === "ingreso") {
+//         porCategoria[m.categoria].ingresos += m.monto;
+//       } else {
+//         porCategoria[m.categoria].egresos += m.monto;
+//       }
+//     });
+
+//     // 🔥 CORRECCIÓN: Calcular efectivo del sistema correctamente
+//     // Obtener pagos en efectivo de alumnos (INGRESOS)
+//     const pagosEfectivoAlumnos = await Pago.find({
+//       fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+//       formaPago: "Efectivo",
+//       estado: { $ne: "Cancelado" },
+//     });
+
+//     const ingresosEfectivo = pagosEfectivoAlumnos.reduce(
+//       (sum, p) => sum + p.montoPagado,
+//       0
+//     );
+
+//     // Obtener pagos en efectivo a profesores (EGRESOS)
+//     const pagosProfesoresEfectivo = await PagoProfesor.find({
+//       fecha_pago: { $gte: fechaInicio, $lte: fechaFin },
+//       estado: "pagado",
+//     });
+
+//     // Por ahora asumimos que los pagos a profesores son en efectivo
+//     // Si en tu sistema tienes forma de pago en PagoProfesor, ajusta aquí
+//     const egresosProfesores = pagosProfesoresEfectivo.reduce(
+//       (sum, p) => sum + p.monto_total,
+//       0
+//     );
+
+//     // Obtener movimientos manuales en efectivo (otros ingresos/egresos)
+//     const movimientosEfectivo = movimientos.filter(
+//       (m) => m.categoria === "otro" || m.categoria === "gasto_operativo"
+//     );
+
+//     const ingresosEfectivoManuales = movimientosEfectivo
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresosEfectivoManuales = movimientosEfectivo
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     // EFECTIVO SISTEMA = Ingresos en efectivo - Egresos en efectivo
+//     const efectivoSistema =
+//       ingresosEfectivo +
+//       ingresosEfectivoManuales -
+//       (egresosProfesores + egresosEfectivoManuales);
+
+//     res.json({
+//       periodo: {
+//         fecha_inicio: fechaInicio,
+//         fecha_fin: fechaFin,
+//       },
+//       totales: {
+//         ingresos,
+//         egresos,
+//         balance,
+//         cantidad_movimientos: movimientos.length,
+//       },
+//       detalles_por_categoria: porCategoria,
+//       arqueo: {
+//         efectivo_sistema: efectivoSistema,
+//         desglose: {
+//           ingresos_efectivo_alumnos: ingresosEfectivo,
+//           ingresos_efectivo_manuales: ingresosEfectivoManuales,
+//           egresos_profesores: egresosProfesores,
+//           egresos_efectivo_manuales: egresosEfectivoManuales,
+//         },
+//       },
+//       movimientos: movimientos.slice(0, 10), // Últimos 10 para preview
+//     });
+//   } catch (error) {
+//     console.error("Error al obtener datos para cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Realizar cierre de caja
+// const realizarCierre = async (req, res) => {
+//   try {
+//     const { fecha_inicio, fecha_fin, efectivo_fisico, observaciones } =
+//       req.body;
+
+//     if (!fecha_inicio || !fecha_fin) {
+//       return res.status(400).json({ msg: "Las fechas son obligatorias" });
+//     }
+
+//     const fechaInicio = new Date(fecha_inicio);
+//     const fechaFin = new Date(fecha_fin);
+//     fechaFin.setHours(23, 59, 59, 999);
+
+//     // Verificar si ya existe un cierre para este período
+//     const cierreExistente = await CierreCaja.findOne({
+//       "periodo.fecha_inicio": fechaInicio,
+//       "periodo.fecha_fin": fechaFin,
+//       estado: "cerrado",
+//     });
+
+//     if (cierreExistente) {
+//       return res.status(400).json({
+//         msg: "Ya existe un cierre para este período",
+//         cierre: cierreExistente,
+//       });
+//     }
+
+//     // Obtener movimientos del período
+//     const movimientos = await Caja.find({
+//       fecha: { $gte: fechaInicio, $lte: fechaFin },
+//     });
+
+//     // Calcular totales
+//     const ingresos = movimientos
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresos = movimientos
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const balance = ingresos - egresos;
+
+//     // Agrupar por categoría
+//     const porCategoria = {};
+//     movimientos.forEach((m) => {
+//       if (!porCategoria[m.categoria]) {
+//         porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+//       }
+//       if (m.tipo === "ingreso") {
+//         porCategoria[m.categoria].ingresos += m.monto;
+//       } else {
+//         porCategoria[m.categoria].egresos += m.monto;
+//       }
+//     });
+
+//     // 🔥 CORRECCIÓN: Calcular efectivo del sistema correctamente
+//     const pagosEfectivoAlumnos = await Pago.find({
+//       fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+//       formaPago: "Efectivo",
+//       estado: { $ne: "Cancelado" },
+//     });
+
+//     const ingresosEfectivo = pagosEfectivoAlumnos.reduce(
+//       (sum, p) => sum + p.montoPagado,
+//       0
+//     );
+
+//     const pagosProfesoresEfectivo = await PagoProfesor.find({
+//       fecha_pago: { $gte: fechaInicio, $lte: fechaFin },
+//       estado: "pagado",
+//     });
+
+//     const egresosProfesores = pagosProfesoresEfectivo.reduce(
+//       (sum, p) => sum + p.monto_total,
+//       0
+//     );
+
+//     const movimientosEfectivo = movimientos.filter(
+//       (m) => m.categoria === "otro" || m.categoria === "gasto_operativo"
+//     );
+
+//     const ingresosEfectivoManuales = movimientosEfectivo
+//       .filter((m) => m.tipo === "ingreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const egresosEfectivoManuales = movimientosEfectivo
+//       .filter((m) => m.tipo === "egreso")
+//       .reduce((sum, m) => sum + m.monto, 0);
+
+//     const efectivoSistema =
+//       ingresosEfectivo +
+//       ingresosEfectivoManuales -
+//       (egresosProfesores + egresosEfectivoManuales);
+//     const efectivoFisico = Number(efectivo_fisico) || 0;
+//     const diferencia = efectivoFisico - efectivoSistema;
+
+//     // Crear cierre
+//     const cierre = new CierreCaja({
+//       periodo: {
+//         fecha_inicio: fechaInicio,
+//         fecha_fin: fechaFin,
+//       },
+//       totales: {
+//         ingresos,
+//         egresos,
+//         balance,
+//         cantidad_movimientos: movimientos.length,
+//       },
+//       detalles_por_categoria: porCategoria,
+//       arqueo: {
+//         efectivo_sistema: efectivoSistema,
+//         efectivo_fisico: efectivoFisico,
+//         diferencia: diferencia,
+//       },
+//       observaciones,
+//       estado: "cerrado",
+//     });
+
+//     await cierre.save();
+
+//     res.status(201).json({
+//       msg: "Cierre de caja realizado exitosamente",
+//       cierre,
+//     });
+//   } catch (error) {
+//     console.error("Error al realizar cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Listar todos los cierres
+// const listarCierres = async (req, res) => {
+//   try {
+//     const cierres = await CierreCaja.find()
+//       .sort({ fecha_cierre: -1 })
+//       .limit(50);
+
+//     res.json({ cierres });
+//   } catch (error) {
+//     console.error("Error al listar cierres:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Obtener un cierre específico
+// const obtenerCierre = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const cierre = await CierreCaja.findById(id);
+
+//     if (!cierre) {
+//       return res.status(404).json({ msg: "Cierre no encontrado" });
+//     }
+
+//     // Obtener los movimientos de ese período
+//     const movimientos = await Caja.find({
+//       fecha: {
+//         $gte: cierre.periodo.fecha_inicio,
+//         $lte: cierre.periodo.fecha_fin,
+//       },
+//     }).sort({ fecha: -1 });
+
+//     res.json({
+//       cierre,
+//       movimientos,
+//     });
+//   } catch (error) {
+//     console.error("Error al obtener cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Eliminar cierre (solo si es necesario corregir)
+// const eliminarCierre = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const cierre = await CierreCaja.findById(id);
+//     if (!cierre) {
+//       return res.status(404).json({ msg: "Cierre no encontrado" });
+//     }
+
+//     await CierreCaja.findByIdAndDelete(id);
+
+//     res.json({ msg: "Cierre eliminado exitosamente" });
+//   } catch (error) {
+//     console.error("Error al eliminar cierre:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// // ✅ Verificar si hay cierre para hoy
+// const verificarCierreHoy = async (req, res) => {
+//   try {
+//     const hoy = new Date();
+//     const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0));
+//     const finHoy = new Date(hoy.setHours(23, 59, 59, 999));
+
+//     const cierreHoy = await CierreCaja.findOne({
+//       "periodo.fecha_inicio": { $gte: inicioHoy },
+//       "periodo.fecha_fin": { $lte: finHoy },
+//       estado: "cerrado",
+//     });
+
+//     res.json({
+//       tiene_cierre: !!cierreHoy,
+//       cierre: cierreHoy,
+//     });
+//   } catch (error) {
+//     console.error("Error al verificar cierre de hoy:", error);
+//     res.status(500).json({ msg: "Error interno del servidor" });
+//   }
+// };
+
+// module.exports = {
+//   obtenerDatosParaCierre,
+//   realizarCierre,
+//   listarCierres,
+//   obtenerCierre,
+//   eliminarCierre,
+//   verificarCierreHoy,
+// };
+const CierreCaja = require("../model/cierre-caja-model");
+const Caja = require("../model/caja-model");
+const Pago = require("../model/pago-model");
+const PagoProfesor = require("../model/pago-profesor-model");
+
+// ✅ Obtener datos para el cierre (sin cerrarlo aún)
+const obtenerDatosParaCierre = async (req, res) => {
+  try {
+    const { fecha_inicio, fecha_fin } = req.query;
+
+    let fechaInicio, fechaFin;
+
+    if (fecha_inicio && fecha_fin) {
+      fechaInicio = new Date(fecha_inicio);
+      fechaFin = new Date(fecha_fin);
+      fechaFin.setHours(23, 59, 59, 999);
+    } else {
+      // Por defecto: hoy
+      const hoy = new Date();
+      fechaInicio = new Date(hoy.setHours(0, 0, 0, 0));
+      fechaFin = new Date(hoy.setHours(23, 59, 59, 999));
+    }
+
+    // Obtener movimientos del período
+    const movimientos = await Caja.find({
+      fecha: { $gte: fechaInicio, $lte: fechaFin },
+    });
+
+    // Calcular totales
+    const ingresos = movimientos
+      .filter((m) => m.tipo === "ingreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const egresos = movimientos
+      .filter((m) => m.tipo === "egreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const balance = ingresos - egresos;
+
+    // Agrupar por categoría
+    const porCategoria = {};
+    movimientos.forEach((m) => {
+      if (!porCategoria[m.categoria]) {
+        porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+      }
+      if (m.tipo === "ingreso") {
+        porCategoria[m.categoria].ingresos += m.monto;
+      } else {
+        porCategoria[m.categoria].egresos += m.monto;
+      }
+    });
+
+    // 🔥 PAGOS DE ALUMNOS - Separar por forma de pago
+    const pagosAlumnos = await Pago.find({
+      fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+      estado: { $ne: "Cancelado" },
+    });
+
+    // Ingresos en EFECTIVO
+    const ingresosEfectivoAlumnos = pagosAlumnos
+      .filter((p) => p.formaPago === "Efectivo")
+      .reduce((sum, p) => sum + p.montoPagado, 0);
+
+    // Ingresos en TRANSFERENCIA
+    const ingresosTransferenciaAlumnos = pagosAlumnos
+      .filter((p) => p.formaPago === "Transferencia")
+      .reduce((sum, p) => sum + p.montoPagado, 0);
+
+    // 🔥 PAGOS A PROFESORES - Todo en efectivo
+    const pagosProfesores = await PagoProfesor.find({
+      fecha_pago: { $gte: fechaInicio, $lte: fechaFin },
+      estado: "pagado",
+    });
+
+    const egresosProfesores = pagosProfesores.reduce(
+      (sum, p) => sum + p.monto_total,
+      0
+    );
+
+    // 🔥 MOVIMIENTOS MANUALES
+    const movimientosEfectivo = movimientos.filter(
+      (m) => m.categoria === "otro" || m.categoria === "gasto_operativo"
+    );
+
+    const ingresosEfectivoManuales = movimientosEfectivo
+      .filter((m) => m.tipo === "ingreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const egresosEfectivoManuales = movimientosEfectivo
+      .filter((m) => m.tipo === "egreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    // 🔥 CÁLCULOS FINALES
+    // EFECTIVO = Ingresos efectivo - Egresos efectivo
+    const efectivoSistema =
+      ingresosEfectivoAlumnos +
+      ingresosEfectivoManuales -
+      (egresosProfesores + egresosEfectivoManuales);
+
+    // TRANSFERENCIAS = Solo ingresos (no hay egresos por transferencia)
+    const transferenciaSistema = ingresosTransferenciaAlumnos;
+
+    res.json({
+      periodo: {
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+      },
+      totales: {
+        ingresos,
+        egresos,
+        balance,
+        cantidad_movimientos: movimientos.length,
+      },
+      detalles_por_categoria: porCategoria,
+      arqueo: {
+        efectivo_sistema: efectivoSistema,
+        transferencia_sistema: transferenciaSistema,
+        desglose: {
+          ingresos_efectivo_alumnos: ingresosEfectivoAlumnos,
+          ingresos_transferencia_alumnos: ingresosTransferenciaAlumnos,
+          ingresos_efectivo_manuales: ingresosEfectivoManuales,
+          egresos_profesores: egresosProfesores,
+          egresos_efectivo_manuales: egresosEfectivoManuales,
+        },
+      },
+      movimientos: movimientos.slice(0, 10),
+    });
+  } catch (error) {
+    console.error("Error al obtener datos para cierre:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+// ✅ Realizar cierre de caja
+const realizarCierre = async (req, res) => {
+  try {
+    const {
+      fecha_inicio,
+      fecha_fin,
+      efectivo_fisico,
+      transferencia_fisica,
+      observaciones,
+    } = req.body;
+
+    if (!fecha_inicio || !fecha_fin) {
+      return res.status(400).json({ msg: "Las fechas son obligatorias" });
+    }
+
+    const fechaInicio = new Date(fecha_inicio);
+    const fechaFin = new Date(fecha_fin);
+    fechaFin.setHours(23, 59, 59, 999);
+
+    // Verificar si ya existe un cierre para este período
+    const cierreExistente = await CierreCaja.findOne({
+      "periodo.fecha_inicio": fechaInicio,
+      "periodo.fecha_fin": fechaFin,
+      estado: "cerrado",
+    });
+
+    if (cierreExistente) {
+      return res.status(400).json({
+        msg: "Ya existe un cierre para este período",
+        cierre: cierreExistente,
+      });
+    }
+
+    // Obtener movimientos del período
+    const movimientos = await Caja.find({
+      fecha: { $gte: fechaInicio, $lte: fechaFin },
+    });
+
+    // Calcular totales
+    const ingresos = movimientos
+      .filter((m) => m.tipo === "ingreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const egresos = movimientos
+      .filter((m) => m.tipo === "egreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const balance = ingresos - egresos;
+
+    // Agrupar por categoría
+    const porCategoria = {};
+    movimientos.forEach((m) => {
+      if (!porCategoria[m.categoria]) {
+        porCategoria[m.categoria] = { ingresos: 0, egresos: 0 };
+      }
+      if (m.tipo === "ingreso") {
+        porCategoria[m.categoria].ingresos += m.monto;
+      } else {
+        porCategoria[m.categoria].egresos += m.monto;
+      }
+    });
+
+    // 🔥 PAGOS DE ALUMNOS
+    const pagosAlumnos = await Pago.find({
+      fechaPago: { $gte: fechaInicio, $lte: fechaFin },
+      estado: { $ne: "Cancelado" },
+    });
+
+    const ingresosEfectivoAlumnos = pagosAlumnos
+      .filter((p) => p.formaPago === "Efectivo")
+      .reduce((sum, p) => sum + p.montoPagado, 0);
+
+    const ingresosTransferenciaAlumnos = pagosAlumnos
+      .filter((p) => p.formaPago === "Transferencia")
+      .reduce((sum, p) => sum + p.montoPagado, 0);
+
+    // 🔥 PAGOS A PROFESORES
+    const pagosProfesores = await PagoProfesor.find({
+      fecha_pago: { $gte: fechaInicio, $lte: fechaFin },
+      estado: "pagado",
+    });
+
+    const egresosProfesores = pagosProfesores.reduce(
+      (sum, p) => sum + p.monto_total,
+      0
+    );
+
+    // 🔥 MOVIMIENTOS MANUALES
+    const movimientosEfectivo = movimientos.filter(
+      (m) => m.categoria === "otro" || m.categoria === "gasto_operativo"
+    );
+
+    const ingresosEfectivoManuales = movimientosEfectivo
+      .filter((m) => m.tipo === "ingreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    const egresosEfectivoManuales = movimientosEfectivo
+      .filter((m) => m.tipo === "egreso")
+      .reduce((sum, m) => sum + m.monto, 0);
+
+    // 🔥 CÁLCULOS FINALES
+    const efectivoSistema =
+      ingresosEfectivoAlumnos +
+      ingresosEfectivoManuales -
+      (egresosProfesores + egresosEfectivoManuales);
+    const transferenciaSistema = ingresosTransferenciaAlumnos;
+
+    const efectivoFisico = Number(efectivo_fisico) || 0;
+    const transferenciaFisica = Number(transferencia_fisica) || 0;
+
+    const diferenciaEfectivo = efectivoFisico - efectivoSistema;
+    const diferenciaTransferencia = transferenciaFisica - transferenciaSistema;
+
+    // Crear cierre
+    const cierre = new CierreCaja({
+      periodo: {
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+      },
+      totales: {
+        ingresos,
+        egresos,
+        balance,
+        cantidad_movimientos: movimientos.length,
+      },
+      detalles_por_categoria: porCategoria,
+      detalles_por_forma_pago: {
+        efectivo: efectivoSistema,
+        transferencia: transferenciaSistema,
+      },
+      arqueo: {
+        efectivo_sistema: efectivoSistema,
+        efectivo_fisico: efectivoFisico,
+        diferencia: diferenciaEfectivo,
+        transferencia_sistema: transferenciaSistema,
+        transferencia_fisica: transferenciaFisica,
+        diferencia_transferencia: diferenciaTransferencia,
+      },
+      observaciones,
+      estado: "cerrado",
+    });
+
+    await cierre.save();
+
+    res.status(201).json({
+      msg: "Cierre de caja realizado exitosamente",
+      cierre,
+    });
+  } catch (error) {
+    console.error("Error al realizar cierre:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+// ✅ Listar todos los cierres
+const listarCierres = async (req, res) => {
+  try {
+    const cierres = await CierreCaja.find()
+      .sort({ fecha_cierre: -1 })
+      .limit(50);
+
+    res.json({ cierres });
+  } catch (error) {
+    console.error("Error al listar cierres:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+// ✅ Obtener un cierre específico
+const obtenerCierre = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const cierre = await CierreCaja.findById(id);
+
+    if (!cierre) {
+      return res.status(404).json({ msg: "Cierre no encontrado" });
+    }
+
+    const movimientos = await Caja.find({
+      fecha: {
+        $gte: cierre.periodo.fecha_inicio,
+        $lte: cierre.periodo.fecha_fin,
+      },
+    }).sort({ fecha: -1 });
+
+    res.json({
+      cierre,
+      movimientos,
+    });
+  } catch (error) {
+    console.error("Error al obtener cierre:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+// ✅ Eliminar cierre
+const eliminarCierre = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const cierre = await CierreCaja.findById(id);
+    if (!cierre) {
+      return res.status(404).json({ msg: "Cierre no encontrado" });
+    }
+
+    await CierreCaja.findByIdAndDelete(id);
+
+    res.json({ msg: "Cierre eliminado exitosamente" });
+  } catch (error) {
+    console.error("Error al eliminar cierre:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+// ✅ Verificar si hay cierre para hoy
+const verificarCierreHoy = async (req, res) => {
+  try {
+    const hoy = new Date();
+    const inicioHoy = new Date(hoy.setHours(0, 0, 0, 0));
+    const finHoy = new Date(hoy.setHours(23, 59, 59, 999));
+
+    const cierreHoy = await CierreCaja.findOne({
+      "periodo.fecha_inicio": { $gte: inicioHoy },
+      "periodo.fecha_fin": { $lte: finHoy },
+      estado: "cerrado",
+    });
+
+    res.json({
+      tiene_cierre: !!cierreHoy,
+      cierre: cierreHoy,
+    });
+  } catch (error) {
+    console.error("Error al verificar cierre de hoy:", error);
+    res.status(500).json({ msg: "Error interno del servidor" });
+  }
+};
+
+module.exports = {
+  obtenerDatosParaCierre,
+  realizarCierre,
+  listarCierres,
+  obtenerCierre,
+  eliminarCierre,
+  verificarCierreHoy,
+};
