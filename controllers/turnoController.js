@@ -236,9 +236,53 @@ const listarTurnosPorUsuario = async (req, res) => {
   }
 };
 
+// 🟢 Editar turno
+const editarTurno = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
+
+    const turno = await Turnos.findById(id);
+    if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
+
+    // Actualizamos los campos
+    turno.id_usuario = id_usuario || turno.id_usuario;
+    turno.id_clase = id_clase || turno.id_clase;
+    turno.fecha = fecha || turno.fecha;
+    turno.horaInicio = horaInicio || turno.horaInicio;
+    turno.horaFin = horaFin || turno.horaFin;
+
+    await turno.save();
+
+    res.json({ msg: "Turno actualizado correctamente", turno });
+  } catch (error) {
+    console.error("Error al editar turno:", error);
+    res.status(500).json({ msg: "Error interno del servidor", error });
+  }
+};
+
+// 🔴 Eliminar turno
+const eliminarTurno = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const turno = await Turnos.findByIdAndDelete(id);
+
+    if (!turno) {
+      return res.status(404).json({ msg: "Turno no encontrado" });
+    }
+
+    res.json({ msg: "Turno eliminado correctamente" });
+  } catch (error) {
+    console.error("Error al eliminar turno:", error);
+    res.status(500).json({ msg: "Error interno del servidor", error });
+  }
+};
+
 module.exports = {
   crearTurno,
   listarTurnos,
   cancelarTurno,
   listarTurnosPorUsuario,
+  editarTurno,
+  eliminarTurno,
 }; // 👈 agregamos esto };

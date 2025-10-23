@@ -28,6 +28,8 @@ const {
   listarTurnos,
   listarTurnosPorUsuario,
   cancelarTurno,
+  editarTurno,
+  eliminarTurno,
 } = require("../controllers/turnoController");
 
 const router = Router();
@@ -42,5 +44,7 @@ router.get("/", listarTurnos);
 router.get("/usuario", listarTurnosPorUsuario);
 // Cancelar turno
 router.put("/:id/cancelar", cancelarTurno);
+router.put("/:id", editarTurno); // ✅ nueva ruta para editar
+router.delete("/:id", eliminarTurno); // ✅ nueva ruta para eliminar
 
 module.exports = router;
