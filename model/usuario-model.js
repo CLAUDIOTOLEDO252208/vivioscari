@@ -1,36 +1,82 @@
-const { Schema, model } = require('mongoose');
+// const { Schema, model } = require('mongoose');
+
+// const UsuarioSchema = Schema({
+// 	nombre_usuario: {
+// 		type: String,
+// 		required: true,
+// 	},
+
+// 	edad: {
+// 		type: Number,
+// 	},
+
+// 	email: {
+// 		type: String,
+// 		required: true,
+// 		unique: true,
+// 	},
+
+// 	password: {
+// 		type: String,
+// 		required: true,
+// 	},
+
+// 	rol: {
+// 		type: String,
+// 		default: 'Usuario',
+// 	},
+
+// 	estado: {
+// 		type: Boolean,
+// 		required: true,
+// 		default: true,
+// 	}
+// });
+
+// module.exports = model('Usuarios', UsuarioSchema);
+const { Schema, model } = require("mongoose");
 
 const UsuarioSchema = Schema({
-	nombre_usuario: {
-		type: String,
-		required: true,
-	},
+  nombre_usuario: {
+    type: String,
+    required: true,
+  },
 
-	edad: {
-		type: Number,
-	},
+  edad: {
+    type: Number,
+  },
 
-	email: {
-		type: String,
-		required: true,
-		unique: true,
-	},
+  domicilio: {
+    type: String,
+    required: true,
+  },
 
-	password: {
-		type: String,
-		required: true,
-	},
+  telefono: {
+    type: String,
+    required: true,
+  },
 
-	rol: {
-		type: String,
-		default: 'Usuario',
-	},
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
 
-	estado: {
-		type: Boolean,
-		required: true,
-		default: true,
-	}
+  password: {
+    type: String,
+    required: true,
+  },
+
+  rol: {
+    type: String,
+    default: "Usuario",
+  },
+
+  estado: {
+    type: Boolean,
+    required: true,
+    default: true,
+  },
 });
 
-module.exports = model('Usuarios', UsuarioSchema);
+module.exports = model("Usuarios", UsuarioSchema);
