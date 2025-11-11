@@ -1,702 +1,3 @@
-// const Turno = require("../model/turno-model");
-// // const Clase = require("../model/clase-model");
-
-// const crearTurno = async (req, res) => {
-//   try {
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     if (!id_usuario || !id_clase || !fecha || !horaInicio || !horaFin) {
-//       return res.status(400).json({ msg: "Todos los campos son obligatorios" });
-//     }
-
-//     // Verificar que la clase exista
-//     const clase = await Clase.findById(id_clase);
-//     if (!clase) {
-//       return res.status(404).json({ msg: "Clase no encontrada" });
-//     }
-
-//     // Verificar si ya existe un turno en ese horario para el mismo usuario
-//     const turnoExistente = await Turno.findOne({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       estado: "Activo",
-//     });
-
-//     if (turnoExistente) {
-//       return res
-//         .status(400)
-//         .json({ msg: "Ya tienes un turno reservado en este horario" });
-//     }
-
-//     // Verificar capacidad de la clase
-//     const cantidadTurnos = await Turno.countDocuments({
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       estado: "Activo",
-//     });
-
-//     if (cantidadTurnos >= clase.capacidad) {
-//       return res
-//         .status(400)
-//         .json({ msg: "La clase ya alcanzó su capacidad máxima" });
-//     }
-
-//     const nuevoTurno = new Turno({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       horaFin,
-//     });
-//     await nuevoTurno.save();
-
-//     res
-//       .status(201)
-//       .json({ msg: "Turno reservado con éxito", turno: nuevoTurno });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ msg: "Error al reservar el turno" });
-//   }
-// };
-
-// const listarTurnos = async (req, res) => {
-//   try {
-//     const turnos = await Turno.find()
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase descripcion");
-
-//     if (!turnos.length) {
-//       return res.status(404).json({ msg: "No hay turnos registrados" });
-//     }
-
-//     res.status(200).json({ msg: "Lista de turnos", turnos });
-//   } catch (error) {
-//     res.status(500).json({ msg: "Error al listar turnos" });
-//   }
-// };
-
-// const cancelarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-
-//     const turno = await Turno.findById(id);
-//     if (!turno) {
-//       return res.status(404).json({ msg: "Turno no encontrado" });
-//     }
-
-//     turno.estado = "Cancelado";
-//     await turno.save();
-
-//     res.status(200).json({ msg: "Turno cancelado correctamente" });
-//   } catch (error) {
-//     res.status(500).json({ msg: "Error al cancelar turno" });
-//   }
-// };
-
-// module.exports = { crearTurno, listarTurnos, cancelarTurno };
-// const Turnos = require("../model/turno-model");
-
-// // Crear turno
-// const crearTurno = async (req, res) => {
-//   try {
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     const nuevoTurno = new Turnos({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       horaFin,
-//     });
-//     await nuevoTurno.save();
-
-//     res.status(201).json(nuevoTurno);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ msg: "Error al crear turno" });
-//   }
-// };
-
-// // Listar turnos
-// const listarTurnos = async (req, res) => {
-//   try {
-//     const turnos = await Turnos.find()
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase dias horarios");
-//     res.json(turnos);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ msg: "Error al listar turnos" });
-//   }
-// };
-
-// // Cancelar turno
-// const cancelarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turnoCancelado = await Turnos.findByIdAndUpdate(
-//       id,
-//       { estado: "Cancelado" },
-//       { new: true }
-//     );
-//     res.json(turnoCancelado);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ msg: "Error al cancelar turno" });
-//   }
-// };
-
-//
-
-// const Turnos = require("../model/turno-model");
-// const Usuarios = require("../model/usuario-model");
-
-// const crearTurno = async (req, res) => {
-//   try {
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     if (!id_usuario) {
-//       return res.status(400).json({ msg: "El id del usuario es obligatorio" });
-//     }
-
-//     const nuevoTurno = new Turnos({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       horaFin,
-//     });
-
-//     await nuevoTurno.save();
-//     res
-//       .status(201)
-//       .json({ msg: "Turno creado correctamente", turno: nuevoTurno });
-//   } catch (error) {
-//     console.error("Error al crear turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const listarTurnos = async (req, res) => {
-//   try {
-//     const turnos = await Turnos.find()
-//       .populate("id_usuario", "nombre_usuario email") // ✅ cambio aquí
-//       .populate("id_clase", "nombre_clase");
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const cancelarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findById(id).populate(
-//       "id_usuario",
-//       "nombre_usuario email"
-//     ); // ✅ corregido
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     turno.estado = "Cancelado";
-//     await turno.save();
-//     res.json({ msg: "Turno cancelado", turno });
-//   } catch (error) {
-//     console.error("Error al cancelar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const listarTurnosPorUsuario = async (req, res) => {
-//   try {
-//     const { email } = req.query; // viene desde el frontend
-
-//     if (!email) {
-//       return res.status(400).json({ msg: "El email es obligatorio" });
-//     }
-
-//     // buscamos el usuario por email
-//     const usuario = await Usuarios.findOne({ email });
-//     if (!usuario) {
-//       return res.status(404).json({ msg: "Usuario no encontrado" });
-//     }
-
-//     // buscamos sus turnos
-//     const turnos = await Turnos.find({ id_usuario: usuario._id })
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase");
-
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos por usuario:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // 🟢 Editar turno
-// const editarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     const turno = await Turnos.findById(id);
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     // Actualizamos los campos
-//     turno.id_usuario = id_usuario || turno.id_usuario;
-//     turno.id_clase = id_clase || turno.id_clase;
-//     turno.fecha = fecha || turno.fecha;
-//     turno.horaInicio = horaInicio || turno.horaInicio;
-//     turno.horaFin = horaFin || turno.horaFin;
-
-//     await turno.save();
-
-//     res.json({ msg: "Turno actualizado correctamente", turno });
-//   } catch (error) {
-//     console.error("Error al editar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // 🔴 Eliminar turno
-// const eliminarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findByIdAndDelete(id);
-
-//     if (!turno) {
-//       return res.status(404).json({ msg: "Turno no encontrado" });
-//     }
-
-//     res.json({ msg: "Turno eliminado correctamente" });
-//   } catch (error) {
-//     console.error("Error al eliminar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// module.exports = {
-//   crearTurno,
-//   listarTurnos,
-//   cancelarTurno,
-//   listarTurnosPorUsuario,
-//   editarTurno,
-//   eliminarTurno,
-// }; // 👈 agregamos esto };
-// const mongoose = require("mongoose");
-// const Turnos = require("../model/turno-model");
-// const Usuarios = require("../model/usuario-model");
-// const Clases = require("../model/clase-model");
-
-// const crearTurno = async (req, res) => {
-//   try {
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     if (!id_usuario) {
-//       return res.status(400).json({ msg: "El id del usuario es obligatorio" });
-//     }
-
-//     const nuevoTurno = new Turnos({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       horaFin,
-//     });
-
-//     await nuevoTurno.save();
-//     res
-//       .status(201)
-//       .json({ msg: "Turno creado correctamente", turno: nuevoTurno });
-//   } catch (error) {
-//     console.error("Error al crear turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const listarTurnos = async (req, res) => {
-//   try {
-//     const turnos = await Turnos.find()
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase");
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const cancelarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findById(id).populate(
-//       "id_usuario",
-//       "nombre_usuario email"
-//     );
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     turno.estado = "Cancelado";
-//     await turno.save();
-//     res.json({ msg: "Turno cancelado", turno });
-//   } catch (error) {
-//     console.error("Error al cancelar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const listarTurnosPorUsuario = async (req, res) => {
-//   try {
-//     const { email } = req.query;
-//     if (!email) {
-//       return res.status(400).json({ msg: "El email es obligatorio" });
-//     }
-
-//     const usuario = await Usuarios.findOne({ email });
-//     if (!usuario) {
-//       return res.status(404).json({ msg: "Usuario no encontrado" });
-//     }
-
-//     const turnos = await Turnos.find({ id_usuario: usuario._id })
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase");
-
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos por usuario:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const editarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     const turno = await Turnos.findById(id);
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     turno.id_usuario = id_usuario || turno.id_usuario;
-//     turno.id_clase = id_clase || turno.id_clase;
-//     turno.fecha = fecha || turno.fecha;
-//     turno.horaInicio = horaInicio || turno.horaInicio;
-//     turno.horaFin = horaFin || turno.horaFin;
-
-//     await turno.save();
-//     res.json({ msg: "Turno actualizado correctamente", turno });
-//   } catch (error) {
-//     console.error("Error al editar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// const eliminarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findByIdAndDelete(id);
-
-//     if (!turno) {
-//       return res.status(404).json({ msg: "Turno no encontrado" });
-//     }
-
-//     res.json({ msg: "Turno eliminado correctamente" });
-//   } catch (error) {
-//     console.error("Error al eliminar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // ✅ Nueva función: cantidad de turnos por clase (con filtro de fechas opcional)
-// const listarCantidadTurnosPorClase = async (req, res) => {
-//   try {
-//     const { desde, hasta } = req.query;
-//     const filtro = {};
-
-//     if (desde || hasta) {
-//       filtro.fecha = {};
-//       if (desde) filtro.fecha.$gte = new Date(desde);
-//       if (hasta) filtro.fecha.$lte = new Date(hasta);
-//     }
-
-//     const resultado = await Turnos.aggregate([
-//       { $match: filtro },
-//       {
-//         $group: {
-//           _id: "$id_clase",
-//           cantidadTurnos: { $sum: 1 },
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: "clases",
-//           localField: "_id",
-//           foreignField: "_id",
-//           as: "claseInfo",
-//         },
-//       },
-//       { $unwind: "$claseInfo" },
-//       {
-//         $project: {
-//           _id: 0,
-//           id_clase: "$claseInfo._id",
-//           nombre_clase: "$claseInfo.nombre_clase",
-//           cantidadTurnos: 1,
-//         },
-//       },
-//       { $sort: { cantidadTurnos: -1 } },
-//     ]);
-
-//     res.json(resultado);
-//   } catch (error) {
-//     console.error("Error al contar turnos por clase:", error);
-//     res.status(500).json({ msg: "Error al contar turnos por clase", error });
-//   }
-// };
-
-// module.exports = {
-//   crearTurno,
-//   listarTurnos,
-//   cancelarTurno,
-//   listarTurnosPorUsuario,
-//   editarTurno,
-//   eliminarTurno,
-//   listarCantidadTurnosPorClase, // ✅ exportamos la nueva función
-// };
-// const mongoose = require("mongoose");
-// const Turnos = require("../model/turno-model");
-// const Usuarios = require("../model/usuario-model");
-// const Clases = require("../model/clase-model");
-
-// // Crear turno
-// const crearTurno = async (req, res) => {
-//   try {
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-//     if (!id_usuario)
-//       return res.status(400).json({ msg: "El id del usuario es obligatorio" });
-
-//     const nuevoTurno = new Turnos({
-//       id_usuario,
-//       id_clase,
-//       fecha,
-//       horaInicio,
-//       horaFin,
-//     });
-//     await nuevoTurno.save();
-//     res
-//       .status(201)
-//       .json({ msg: "Turno creado correctamente", turno: nuevoTurno });
-//   } catch (error) {
-//     console.error("Error al crear turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Listar todos los turnos
-// const listarTurnos = async (req, res) => {
-//   try {
-//     const turnos = await Turnos.find()
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase");
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Listar turnos por usuario
-// const listarTurnosPorUsuario = async (req, res) => {
-//   try {
-//     const { email } = req.query;
-//     if (!email) return res.status(400).json({ msg: "El email es obligatorio" });
-
-//     const usuario = await Usuarios.findOne({ email });
-//     if (!usuario) return res.status(404).json({ msg: "Usuario no encontrado" });
-
-//     const turnos = await Turnos.find({ id_usuario: usuario._id })
-//       .populate("id_usuario", "nombre_usuario email")
-//       .populate("id_clase", "nombre_clase");
-
-//     res.json({ turnos });
-//   } catch (error) {
-//     console.error("Error al listar turnos por usuario:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Cancelar turno
-// const cancelarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findById(id).populate(
-//       "id_usuario",
-//       "nombre_usuario email"
-//     );
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     turno.estado = "Cancelado";
-//     await turno.save();
-//     res.json({ msg: "Turno cancelado", turno });
-//   } catch (error) {
-//     console.error("Error al cancelar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Editar turno
-// const editarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
-
-//     const turno = await Turnos.findById(id);
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     turno.id_usuario = id_usuario || turno.id_usuario;
-//     turno.id_clase = id_clase || turno.id_clase;
-//     turno.fecha = fecha || turno.fecha;
-//     turno.horaInicio = horaInicio || turno.horaInicio;
-//     turno.horaFin = horaFin || turno.horaFin;
-
-//     await turno.save();
-//     res.json({ msg: "Turno actualizado correctamente", turno });
-//   } catch (error) {
-//     console.error("Error al editar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Eliminar turno
-// const eliminarTurno = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const turno = await Turnos.findByIdAndDelete(id);
-//     if (!turno) return res.status(404).json({ msg: "Turno no encontrado" });
-
-//     res.json({ msg: "Turno eliminado correctamente" });
-//   } catch (error) {
-//     console.error("Error al eliminar turno:", error);
-//     res.status(500).json({ msg: "Error interno del servidor", error });
-//   }
-// };
-
-// // Cantidad de turnos por clase
-// const listarCantidadTurnosPorClase = async (req, res) => {
-//   try {
-//     const { desde, hasta } = req.query;
-//     const filtro = {};
-
-//     if (desde || hasta) {
-//       filtro.fecha = {};
-//       if (desde) filtro.fecha.$gte = new Date(desde);
-//       if (hasta) filtro.fecha.$lte = new Date(hasta);
-//     }
-
-//     const resultado = await Turnos.aggregate([
-//       { $match: filtro },
-//       { $group: { _id: "$id_clase", cantidadTurnos: { $sum: 1 } } },
-//       {
-//         $lookup: {
-//           from: "clases",
-//           localField: "_id",
-//           foreignField: "_id",
-//           as: "claseInfo",
-//         },
-//       },
-//       { $unwind: "$claseInfo" },
-//       {
-//         $project: {
-//           _id: 0,
-//           id_clase: "$claseInfo._id",
-//           nombre_clase: "$claseInfo.nombre_clase",
-//           cantidadTurnos: 1,
-//         },
-//       },
-//       { $sort: { cantidadTurnos: -1 } },
-//     ]);
-
-//     res.json(resultado);
-//   } catch (error) {
-//     console.error("Error al contar turnos por clase:", error);
-//     res.status(500).json({ msg: "Error al contar turnos por clase", error });
-//   }
-// };
-
-// // // Turnos detallados por clase (fecha y hora)
-// // const listarTurnosDetalladosPorClase = async (req, res) => {
-// //   try {
-// //     const { desde, hasta } = req.query;
-// //     const filtro = {};
-
-// //     if (desde || hasta) {
-// //       filtro.fecha = {};
-// //       if (desde) filtro.fecha.$gte = new Date(desde);
-// //       if (hasta) filtro.fecha.$lte = new Date(hasta);
-// //     }
-
-// //     const turnos = await Turnos.find(filtro)
-// //       .populate("id_clase", "nombre_clase")
-// //       .select("fecha horaInicio horaFin id_clase")
-// //       .sort({ fecha: 1 });
-
-// //     const resultado = turnos.map((t) => ({
-// //       nombre_clase: t.id_clase?.nombre_clase || "Sin clase",
-// //       fecha: new Date(t.fecha).toLocaleDateString("es-AR"),
-// //       horaInicio: t.horaInicio,
-// //       horaFin: t.horaFin,
-// //     }));
-
-// //     res.json(resultado);
-// //   } catch (error) {
-// //     console.error("Error al listar turnos detallados por clase:", error);
-// //     res.status(500).json({ msg: "Error al listar turnos", error });
-// //   }
-// // };
-// // Turnos detallados por clase (fecha, hora y alumno)
-// const listarTurnosDetalladosPorClase = async (req, res) => {
-//   try {
-//     const { desde, hasta } = req.query;
-//     const filtro = {};
-
-//     if (desde || hasta) {
-//       filtro.fecha = {};
-//       if (desde) filtro.fecha.$gte = new Date(desde);
-//       if (hasta) filtro.fecha.$lte = new Date(hasta);
-//     }
-
-//     const turnos = await Turnos.find(filtro)
-//       .populate("id_clase", "nombre_clase")
-//       .populate("id_usuario", "nombre_usuario") // 👈 populamos el nombre del alumno
-//       .select("fecha horaInicio horaFin id_clase id_usuario")
-//       .sort({ fecha: 1 });
-
-//     const resultado = turnos.map((t) => ({
-//       nombre_clase: t.id_clase?.nombre_clase || "Sin clase",
-//       alumno: t.id_usuario?.nombre_usuario || "Sin alumno",
-//       fecha: new Date(t.fecha).toLocaleDateString("es-AR"),
-//       horaInicio: t.horaInicio,
-//       horaFin: t.horaFin,
-//     }));
-
-//     res.json(resultado);
-//   } catch (error) {
-//     console.error("Error al listar turnos detallados por clase:", error);
-//     res.status(500).json({ msg: "Error al listar turnos", error });
-//   }
-// };
-
-// module.exports = {
-//   crearTurno,
-//   listarTurnos,
-//   listarTurnosPorUsuario,
-//   cancelarTurno,
-//   editarTurno,
-//   eliminarTurno,
-//   listarCantidadTurnosPorClase,
-//   listarTurnosDetalladosPorClase,
-// };
 // const mongoose = require("mongoose");
 // const Turnos = require("../model/turno-model");
 // const Usuarios = require("../model/usuario-model");
@@ -812,7 +113,7 @@
 //   }
 // };
 
-// // ✅ Función nueva: detalle + cantidad de turnos por clase
+// // ✅ Función corregida: usa toISOString().split('T')[0] para evitar problemas de zona horaria
 // const listarTurnosConCantidadPorClase = async (req, res) => {
 //   try {
 //     const { desde, hasta } = req.query;
@@ -833,7 +134,9 @@
 //     const detalle = turnos.map((t) => ({
 //       nombre_clase: t.id_clase?.nombre_clase || "Sin clase",
 //       alumno: t.id_usuario?.nombre_usuario || "Sin alumno",
-//       fecha: new Date(t.fecha).toLocaleDateString("es-AR"),
+//       fecha: t.fecha
+//         ? new Date(t.fecha).toISOString().split("T")[0]
+//         : "Sin fecha",
 //       horaInicio: t.horaInicio,
 //       horaFin: t.horaFin,
 //     }));
@@ -865,12 +168,25 @@ const Turnos = require("../model/turno-model");
 const Usuarios = require("../model/usuario-model");
 const Clases = require("../model/clase-model");
 
+// ✅ Función original con soporte para paquetes
 const crearTurno = async (req, res) => {
   try {
     const { id_usuario, id_clase, fecha, horaInicio, horaFin } = req.body;
 
     if (!id_usuario) {
       return res.status(400).json({ msg: "El id del usuario es obligatorio" });
+    }
+
+    // Verificar si la clase es un paquete
+    const clase = await Clases.findById(id_clase);
+    if (!clase) {
+      return res.status(404).json({ msg: "Clase no encontrada" });
+    }
+
+    // Si es un paquete, verificar que el usuario tenga sesiones disponibles
+    if (clase.tipo_clase === "paquete_8" || clase.tipo_clase === "paquete_12") {
+      // Aquí podrías agregar lógica adicional para verificar sesiones disponibles
+      // Por ahora solo creamos el turno
     }
 
     const nuevoTurno = new Turnos({
@@ -882,20 +198,29 @@ const crearTurno = async (req, res) => {
     });
 
     await nuevoTurno.save();
-    res
-      .status(201)
-      .json({ msg: "Turno creado correctamente", turno: nuevoTurno });
+
+    // Populate para devolver información completa
+    await nuevoTurno.populate([
+      { path: "id_usuario", select: "nombre_usuario email" },
+      { path: "id_clase", select: "nombre_clase tipo_clase cantidad_sesiones" },
+    ]);
+
+    res.status(201).json({
+      msg: "Turno creado correctamente",
+      turno: nuevoTurno,
+    });
   } catch (error) {
     console.error("Error al crear turno:", error);
     res.status(500).json({ msg: "Error interno del servidor", error });
   }
 };
 
+// ✅ Mantiene funcionalidad original
 const listarTurnos = async (req, res) => {
   try {
     const turnos = await Turnos.find()
       .populate("id_usuario", "nombre_usuario email")
-      .populate("id_clase", "nombre_clase");
+      .populate("id_clase", "nombre_clase tipo_clase cantidad_sesiones");
     res.json({ turnos });
   } catch (error) {
     console.error("Error al listar turnos:", error);
@@ -903,6 +228,7 @@ const listarTurnos = async (req, res) => {
   }
 };
 
+// ✅ Mantiene funcionalidad original
 const cancelarTurno = async (req, res) => {
   try {
     const { id } = req.params;
@@ -921,6 +247,7 @@ const cancelarTurno = async (req, res) => {
   }
 };
 
+// ✅ Mantiene funcionalidad original
 const listarTurnosPorUsuario = async (req, res) => {
   try {
     const { email } = req.query;
@@ -931,7 +258,7 @@ const listarTurnosPorUsuario = async (req, res) => {
 
     const turnos = await Turnos.find({ id_usuario: usuario._id })
       .populate("id_usuario", "nombre_usuario email")
-      .populate("id_clase", "nombre_clase");
+      .populate("id_clase", "nombre_clase tipo_clase cantidad_sesiones");
 
     res.json({ turnos });
   } catch (error) {
@@ -940,6 +267,54 @@ const listarTurnosPorUsuario = async (req, res) => {
   }
 };
 
+// 🆕 NUEVO: Listar turnos de un usuario para un paquete específico
+const listarTurnosPorPaquete = async (req, res) => {
+  try {
+    const { email, id_clase } = req.query;
+
+    if (!email || !id_clase) {
+      return res.status(400).json({
+        msg: "El email y el id de la clase son obligatorios",
+      });
+    }
+
+    const usuario = await Usuarios.findOne({ email });
+    if (!usuario) return res.status(404).json({ msg: "Usuario no encontrado" });
+
+    const clase = await Clases.findById(id_clase);
+    if (!clase) return res.status(404).json({ msg: "Clase no encontrada" });
+
+    const turnos = await Turnos.find({
+      id_usuario: usuario._id,
+      id_clase: id_clase,
+      estado: "Activo",
+    })
+      .populate("id_usuario", "nombre_usuario email")
+      .populate("id_clase", "nombre_clase tipo_clase cantidad_sesiones")
+      .sort({ fecha: 1 });
+
+    const sesiones_usadas = turnos.length;
+    const sesiones_restantes = clase.cantidad_sesiones
+      ? clase.cantidad_sesiones - sesiones_usadas
+      : null;
+
+    res.json({
+      turnos,
+      resumen: {
+        clase: clase.nombre_clase,
+        tipo: clase.tipo_clase,
+        sesiones_totales: clase.cantidad_sesiones,
+        sesiones_usadas,
+        sesiones_restantes,
+      },
+    });
+  } catch (error) {
+    console.error("Error al listar turnos por paquete:", error);
+    res.status(500).json({ msg: "Error interno del servidor", error });
+  }
+};
+
+// ✅ Mantiene funcionalidad original
 const editarTurno = async (req, res) => {
   try {
     const { id } = req.params;
@@ -962,6 +337,7 @@ const editarTurno = async (req, res) => {
   }
 };
 
+// ✅ Mantiene funcionalidad original
 const eliminarTurno = async (req, res) => {
   try {
     const { id } = req.params;
@@ -975,7 +351,7 @@ const eliminarTurno = async (req, res) => {
   }
 };
 
-// ✅ Función corregida: usa toISOString().split('T')[0] para evitar problemas de zona horaria
+// ✅ Mantiene funcionalidad original
 const listarTurnosConCantidadPorClase = async (req, res) => {
   try {
     const { desde, hasta } = req.query;
@@ -988,13 +364,14 @@ const listarTurnosConCantidadPorClase = async (req, res) => {
     }
 
     const turnos = await Turnos.find(filtro)
-      .populate("id_clase", "nombre_clase")
+      .populate("id_clase", "nombre_clase tipo_clase cantidad_sesiones")
       .populate("id_usuario", "nombre_usuario")
       .select("fecha horaInicio horaFin id_clase id_usuario")
       .sort({ fecha: 1 });
 
     const detalle = turnos.map((t) => ({
       nombre_clase: t.id_clase?.nombre_clase || "Sin clase",
+      tipo_clase: t.id_clase?.tipo_clase || "regular",
       alumno: t.id_usuario?.nombre_usuario || "Sin alumno",
       fecha: t.fecha
         ? new Date(t.fecha).toISOString().split("T")[0]
@@ -1024,4 +401,5 @@ module.exports = {
   editarTurno,
   eliminarTurno,
   listarTurnosConCantidadPorClase,
+  listarTurnosPorPaquete, // 🆕 Nueva función
 };
