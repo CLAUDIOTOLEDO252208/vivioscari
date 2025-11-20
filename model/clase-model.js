@@ -1,30 +1,3 @@
-// const { Schema, model } = require("mongoose");
-
-// const ClaseSchema = Schema({
-//   nombre_clase: {
-//     type: String,
-//     required: true,
-//   },
-//   descripcion: {
-//     type: String,
-//   },
-//   dias: {
-//     type: [String],
-//   },
-//   horarios: {
-//     type: [String],
-//   },
-//   capacidad: {
-//     type: Number,
-//     default: 10,
-//   },
-//   estado: {
-//     type: Boolean,
-//     default: true,
-//   },
-// });
-
-// module.exports = model("Clases", ClaseSchema);
 const { Schema, model } = require("mongoose");
 
 const ClaseSchema = Schema({
@@ -49,21 +22,34 @@ const ClaseSchema = Schema({
     type: Boolean,
     default: true,
   },
-  // 🆕 NUEVO: Tipo de clase
   tipo_clase: {
     type: String,
-    enum: ["regular", "paquete_8", "paquete_12"],
+    enum: [
+      "regular",
+      "paquete_8",
+      "paquete_12",
+      "paquete_8_fijo",
+      "paquete_12_fijo",
+    ],
     default: "regular",
   },
-  // 🆕 NUEVO: Cantidad de sesiones si es paquete
   cantidad_sesiones: {
     type: Number,
     default: null,
   },
-  // 🆕 NUEVO: Precio del paquete
   precio: {
     type: Number,
     default: 0,
+  },
+  // 🆕 NUEVO: Indicar si es con días fijos
+  dias_fijos: {
+    type: Boolean,
+    default: false,
+  },
+  // 🆕 NUEVO: Días fijos asignados automáticamente (solo lectura)
+  dias_fijos_asignados: {
+    type: [String],
+    default: [],
   },
 });
 

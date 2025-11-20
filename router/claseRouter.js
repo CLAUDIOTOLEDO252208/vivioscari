@@ -1,21 +1,3 @@
-// const { Router } = require("express");
-// const {
-//   listarClases,
-//   crearClase,
-//   actualizarClase,
-//   eliminarClase,
-// } = require("../controllers/claseController");
-// const router = Router();
-
-// // Rutas públicas
-// router.get("/", listarClases);
-
-// // Rutas admin
-// router.post("/", crearClase);
-// router.put("/:id", actualizarClase);
-// router.delete("/:id", eliminarClase);
-
-// module.exports = router;
 const { Router } = require("express");
 const {
   listarClases,
@@ -24,22 +6,30 @@ const {
   eliminarClase,
   crearClasePaquete8,
   crearClasePaquete12,
+  crearClasePaquete8Fijo, // 🆕 Nuevo
+  crearClasePaquete12Fijo, // 🆕 Nuevo
   listarClasesRegulares,
   listarPaquetes,
 } = require("../controllers/claseController");
 
 const router = Router();
 
-// ✅ Rutas originales que siguen funcionando
-router.get("/", listarClases); // Lista TODAS las clases (regulares y paquetes)
-router.post("/", crearClase); // Crear clase regular
+// ✅ Rutas originales
+router.get("/", listarClases);
+router.post("/", crearClase);
 router.put("/:id", actualizarClase);
 router.delete("/:id", eliminarClase);
 
-// 🆕 NUEVAS rutas para paquetes
-router.post("/paquete-8", crearClasePaquete8); // Crear clase con 8 sesiones
-router.post("/paquete-12", crearClasePaquete12); // Crear clase con 12 sesiones
-router.get("/regulares", listarClasesRegulares); // Solo clases regulares
-router.get("/paquetes", listarPaquetes); // Solo paquetes (8 y 12 sesiones)
+// Paquetes flexibles
+router.post("/paquete-8", crearClasePaquete8);
+router.post("/paquete-12", crearClasePaquete12);
+
+// 🆕 Paquetes con días fijos
+router.post("/paquete-8-fijo", crearClasePaquete8Fijo);
+router.post("/paquete-12-fijo", crearClasePaquete12Fijo);
+
+// Filtros
+router.get("/regulares", listarClasesRegulares);
+router.get("/paquetes", listarPaquetes);
 
 module.exports = router;

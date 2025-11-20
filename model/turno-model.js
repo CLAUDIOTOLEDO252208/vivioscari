@@ -28,6 +28,11 @@ const TurnoSchema = Schema({
     enum: ["Activo", "Cancelado"],
     default: "Activo",
   },
+  // 🆕 NUEVO: Día de la semana (para paquetes fijos)
+  dia_semana: {
+    type: String,
+    default: null, // Lunes, Martes, Miércoles, etc.
+  },
 });
 
 module.exports = model("Turnos", TurnoSchema);
